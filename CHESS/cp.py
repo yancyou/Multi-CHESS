@@ -4,23 +4,23 @@ from itertools import zip_longest
 import os
 
 def execute_sql(conn, sql):
-    """执行SQL语句，返回结果列表"""
+    """Execute SQL statement and return result list"""
     cursor = conn.cursor()
     cursor.execute(sql)
     return cursor.fetchall()
 
 def normalize_result(result):
-    """将结果转换为扁平列表（适用于单列结果）"""
+    """Convert result to a flat list (applicable for single column results)"""
     return [row[0] for row in result if row[0] is not None]
 
 def compare_columns(expected_columns, merged_columns):
     """
-    检查merged_columns中是否存在与expected_columns一一匹配的列（值和顺序）
-    :param expected_columns: list of lists，每个元素是期望的列
-    :param merged_columns: list of lists，合并结果中的列
+    Check if there are columns in merged_columns that match one-to-one with expected_columns (values and order)
+    :param expected_columns: list of lists, each element is an expected column
+    :param merged_columns: list of lists, columns in the merged result
     :return: True or False
     """
-    # 复制merged_columns以便删除已匹配的列
+    # Copy merged_columns to allow removal of matched columns
     candidate_cols = [col[:] for col in merged_columns]
 
     for expected_col in expected_columns:
@@ -30,7 +30,7 @@ def compare_columns(expected_columns, merged_columns):
                 continue
             
             if all(e == m for e, m in zip(expected_col, merged_col)):
-                # 匹配成功，从候选列中移除该列
+                # Match successful, remove this column from candidate columns
                 print(f"Matched! we have {len(expected_col)}")
                 print(expected_col)
                 print(merged_col)
@@ -43,14 +43,14 @@ def compare_columns(expected_columns, merged_columns):
 
 def validate_sql_results(conn, sql_1, sql_2, sql_merged):
     """
-    验证合并后的SQL是否与原始两个SQL结果一致
-    :param conn: 数据库连接
-    :param sql_1: 第一个SQL语句
-    :param sql_2: 第二个SQL语句
-    :param sql_merged: 合并后的SQL语句
-    :return: True or False
+    Validate if the merged SQL result is consistent with the results of the original two SQL queries
+    :param conn: database connection
+    :param sql_1: first SQL statement
+    :param sql_2: second SQL statement
+    :param sql_merged: merged SQL statement
+    :return: Validation result dictionary
     """
-    # 执行三个SQL语句
+    # Execute three SQL statements
     result_1 = execute_sql(conn, sql_1)
     print("PASS 1")
     
@@ -59,17 +59,17 @@ def validate_sql_results(conn, sql_1, sql_2, sql_merged):
    
     result_merged = execute_sql(conn, sql_merged)
     
-    # 转换为列优先格式（每列是一个列表）
+    # Convert to column-priority format (each column is a list)
     def to_columns(result):
         return [list(col) for col in zip(*result)]
 
-    # 提取原始SQL结果的列
+    # Extract columns from original SQL results
     expected_columns = to_columns(result_1) + to_columns(result_2)
     print(expected_columns)
-    # 提取合并后的列（忽略 Info_Type 列）
+    # Extract columns from merged result (ignore Info_Type column)
     merged_columns = to_columns(result_merged)[:]
 
-    # 从合并结果中移除 NULL 值
+    # Remove NULL values from merged results
     merged_columns_cleaned = [
         [val for val in col if val is not None]
         for col in merged_columns
@@ -77,13 +77,13 @@ def validate_sql_results(conn, sql_1, sql_2, sql_merged):
 
     print(merged_columns_cleaned)
 
-    # 从原始结果中提取列（同样移除 NULL）
+    # Extract columns from original results (also remove NULL)
     expected_columns_cleaned = [
         [val for val in col if val is not None]
         for col in expected_columns
     ]
 
-    # 比较列
+    # Compare columns
     isvalid = compare_columns(expected_columns_cleaned, merged_columns_cleaned)
     validation_result = {
         "sql_1": to_columns(result_1),
@@ -93,7 +93,7 @@ def validate_sql_results(conn, sql_1, sql_2, sql_merged):
     }
     return validation_result
 
-# 示例调用
+# Example call
 DB_CONNECTIONS = {}
 DB_FILE_PATHS = {}
 def get_db_connection(db_id: str, db_dir: str = r"data/spider_data/test_database") -> sqlite3.Connection:
@@ -113,7 +113,7 @@ def get_db_connection(db_id: str, db_dir: str = r"data/spider_data/test_database
     return DB_CONNECTIONS[db_id]
 
 if __name__ == "__main__":
-    # 加载 JSON 文件（使用 check.py 的 output_path）
+    # Load JSON file (using check.py's output_path)
     input_path = r"data/spider_data/small_test_val.json"
     with open(input_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     #db_id = "bbc_channels"
     #conn = get_db_connection(db_id)
 
-    # 遍历每个问题
+    # Iterate through each question
     for entry in data:
         question = entry["question"]
         sql_1 = entry["sql_1"]

@@ -147,7 +147,7 @@ Return JSON format only:
 }}
 """
 
-#这个结果只是直接拿着结果result询问，可能可以改为接上cp.py里的返回字典询问
+# This result is directly based on querying results, could potentially be improved by using the response dictionary from cp.py
 def generate_validation_prompt_with_results(
     entry: Dict[str, Any], 
     results_1: List[Dict],
@@ -202,7 +202,7 @@ def llm_generate(input: str) -> Dict[str, Any]:
     """Enhanced LLM generation with robust JSON parsing"""
     try:
         result = client.chat.completions.create(
-            model="gpt-4o-mini-2024-07-18",  # 使用OpenAI的gpt-4o-mini-2024-07-18模型
+            model="gpt-4o-mini-2024-07-18",  # Using OpenAI's gpt-4o-mini-2024-07-18 model
             messages=[
                 {
                     "content": "You are an expert in analyzing SQLs. Please respond with valid JSON only.",
@@ -298,7 +298,7 @@ def process_entry(entry: Dict[str, Any], schema_dir: str, db_dir: str) -> Dict[s
             cp_result = validate_sql_results(conn, entry["sql_1"], entry["sql_2"], entry["sql_merged"])
             entry["is_valid"] = cp_result.get("isvalid", False)
         except Exception as e:
-            # 执行出错（如语法错误），视为未通过，记录异常并重试
+            # Execution error (e.g., syntax error), consider as validation failure, record exception and retry
             entry["is_valid"] = False
             previous_issues = str(e)
             attempt += 1
@@ -309,7 +309,7 @@ def process_entry(entry: Dict[str, Any], schema_dir: str, db_dir: str) -> Dict[s
         # Otherwise record generic issue and retry
         previous_issues = "SQL execution mismatch"
         attempt += 1
-    # 移除详细的验证字段，仅保留 is_valid
+    # Remove detailed validation fields, keep only is_valid
     for _key in [
         "validation_method",
         "results_1_sample",
@@ -358,5 +358,5 @@ def main(input_path: str = "data/spider_data/small_test.json",
         conn.close()
 
 if __name__ == "__main__":
-    # 主要处理流程
+    # Main processing workflow
     main()
