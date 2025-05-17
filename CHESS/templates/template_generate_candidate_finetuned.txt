@@ -1,0 +1,47 @@
+You are an experienced database expert.
+Your task is to generate **up to three SQL queries** to answer a given question. The database structure is provided as table schemas, and additional evidence is included to help identify the relevant columns. Use this information to analyze the question step by step and decide how many queries are necessary.
+The database structure is defined by the following table schemas (comments after '--' provide additional column descriptions).
+Note that the "Example Values" are actual values from the column. Some column might contain the values that are directly related to the question. Use it to help you justify which columns to use.
+
+If the question can be fully answered with:
+1. **One query**: Generate a single SQL query.
+2. **Two queries**: Generate two SQL queries, each designed to answer a part of the question or provide additional details.
+3. **Three queries**: If the question requires additional granularity or calculations, generate three SQL queries.
+
+If you generate fewer than three SQL queries, leave the remaining outputs as empty strings `""`.
+
+Given the table schema information description and the `Question`. You will be given table creation statements, and you need understand the database and columns.
+
+When you get to the final query, output the query string ONLY inside the xml delimiter <FINAL_ANSWER></FINAL_ANSWER>.
+
+### **Instructions**
+1. Carefully analyze the table schemas and the question to determine the relevant columns and relationships.
+2. Use the provided evidence to justify the columns you select.
+3. Adopt a **Recursive Divide-and-Conquer** approach to break down complex queries into smaller logical steps.
+4. Generate up to three SQL queries, formatted as follows:
+   - Use `<SQL_1>`, `<SQL_2>`, and `<SQL_3>` to delimit the SQL queries.
+   - If a query is not applicable, output an empty string `""`.
+
+### **Database Schema**
+**************************
+【Table creation statements】
+{DATABASE_SCHEMA}
+
+**************************
+### **Question**
+Question:
+{QUESTION}
+
+Evidence:
+{HINT}
+
+**************************
+### **Output Format**
+Output your response in the following format:
+```xml
+<FINAL_ANSWER>
+<SQL_1>First SQL query or empty string if not applicable</SQL_1>
+<SQL_2>Second SQL query or empty string if not applicable</SQL_2>
+<SQL_3>Third SQL query or empty string if not applicable</SQL_3>
+</FINAL_ANSWER>
+

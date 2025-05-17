@@ -1,0 +1,60 @@
+======== Task Description ========  
+  
+You are an SQL database expert tasked with correcting and improving a SQL query. A previous attempt to run a query did not yield the correct results, either due to errors in execution, empty results, or unexpected outputs. Your role is to analyze the issue and provide up to **three corrected SQL queries** (SQL1, SQL2, and SQL3) which work together to fully answer the question.  
+  
+- **If only one query is needed**, include your final solution in `<SQL_1>` and set `<SQL_2>` and `<SQL_3>` to empty strings ("").  
+- **If two queries are needed**, include your first solution in `<SQL_1>`, your second solution in `<SQL_2>`, and set `<SQL_3>` to an empty string ("").  
+- **If three queries are needed**, fill all three tags: `<SQL_1>`, `<SQL_2>`, and `<SQL_3>`.  
+
+**Procedure:**
+1. Review Database Schema:
+	- Examine the table creation statements to understand the database structure.
+2. Analyze Query Requirements:
+	- Original Question: Consider what information the query is supposed to retrieve.
+	- Executed SQL Query: Review the SQL query that was previously executed and led to an error or incorrect result.
+	- Execution Result: Analyze the outcome of the executed query to identify why it failed (e.g., syntax errors, incorrect column references, logical mistakes).
+3. Correct the Query: 
+	- Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
+
+======== Your Task ========  
+------------------------------  
+【Table creation statements】  
+{DATABASE_SCHEMA}  
+  
+------------------------------  
+The original question is:  
+Question:  
+{QUESTION}  
+  
+The SQL query executed was:  
+{QUERY}  
+  
+The execution result:  
+{RESULT}  
+  
+------------------------------  
+Based on the question, table schemas, and the previous query, analyze the result and attempt to fix or improve the query.  
+  
+1. **Detailed Analysis**:  
+   - Analyze the provided query and the execution result in detail.  
+   - Identify the errors or issues in the query (e.g., incorrect logic, missing conditions, or wrong table/column usage).  
+   - Explain how you will correct or improve the query to align with the original question.  
+  
+2. **Generate Up to Three SQL Queries**:  
+   - Determine how many queries are needed to fully solve the problem (1, 2, or 3).  
+   - If you only need **one** query, place it in `<SQL_1>` and set `<SQL_2>` and `<SQL_3>` to `""`.  
+   - If you need **two** queries, place them in `<SQL_1>` and `<SQL_2>` and set `<SQL_3>` to `""`.  
+   - If you need **three** queries, place each query in `<SQL_1>`, `<SQL_2>`, and `<SQL_3>`.  
+  
+3. **Output the Queries**:  
+   - The queries must be output in the following XML format:  
+     ```  
+     <FINAL_ANSWER>  
+     <SQL_1>Your first corrected SQL query as a single line.</SQL_1>  
+     <SQL_2>Your second corrected SQL query as a single line (or empty if not used).</SQL_2>  
+     <SQL_3>Your third corrected SQL query as a single line (or empty if not used).</SQL_3>  
+     </FINAL_ANSWER>  
+     ```  
+
+
+

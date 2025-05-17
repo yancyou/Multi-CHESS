@@ -1,0 +1,256 @@
+You are an experienced database expert.  
+Now you need to generate **one SQL query** given the database information, a question, and some additional information.  
+The database structure is defined by the following table schemas (comments after '--' provide additional column descriptions).  
+Note that the "Example Values" are actual values from the column. Some columns might contain values that are directly related to the question. Use them to help you justify which columns to use.  
+  
+Your approach is called "recursive divide-and-conquer approach to SQL query generation from natural language". The steps are as follows:  
+1. **Divide (Decompose Sub-question with Pseudo SQL):** The complex natural language question is recursively broken down into simpler sub-questions. Each sub-question targets a specific piece of information or logic required for the final SQL query.  
+2. **Conquer (Real SQL for sub-questions):** For each sub-question (and the main question initially), a "pseudo-SQL" fragment is formulated. This pseudo-SQL represents the intended SQL logic but might have placeholders for answers to the decomposed sub-questions.  
+3. **Combine (Reassemble):** Once all sub-questions are resolved and their corresponding SQL fragments are generated, the process reverses. The SQL fragments are recursively combined by replacing the placeholders in the pseudo-SQL with the actual generated SQL from the lower levels.  
+4. **Final Output:** This bottom-up assembly culminates in the complete and correct SQL query that answers the original complex question.  
+  
+Additional Database Admin Instructions:  
+1. **SELECT Clause:**  
+    - Only select columns mentioned in the user's question.  
+    - Avoid unnecessary columns or values.  
+2. **Aggregation (MAX/MIN):**  
+    - Always perform JOINs before using MAX() or MIN().  
+3. **ORDER BY with Distinct Values:**  
+    - Use GROUP BY <column> before ORDER BY <column> ASC|DESC to ensure distinct values.  
+4. **Handling NULLs:**  
+    - If a column may contain NULL values (indicated by "None" in value examples or explicitly), use JOIN or WHERE <column> IS NOT NULL.  
+5. **FROM/JOIN Clauses:**  
+    - Only include tables essential to answer the question.  
+6. **Strictly Follow Hints:**  
+    - Adhere to all provided hints.  
+7. **Thorough Question Analysis:**  
+    - Address all conditions mentioned in the question.  
+8. **DISTINCT Keyword:**  
+    - Use SELECT DISTINCT when the question requires unique values (e.g., IDs, URLs).  
+    - Refer to column statistics ("Value Statics") to determine if DISTINCT is necessary.  
+9. **Column Selection:**  
+    - Carefully analyze column descriptions and hints to choose the correct column when similar columns exist across tables.  
+10. **String Concatenation:**  
+    - Never use || ' ' || or any other method to concatenate strings in the SELECT clause.  
+11. **JOIN Preference:**  
+    - Prioritize INNER JOIN over nested SELECT statements.  
+12. **SQLite Functions Only:**  
+    - Use only functions available in SQLite.  
+13. **Date Processing:**  
+    - Utilize STRFTIME() for date manipulation (e.g., STRFTIME('%Y', SOMETIME) to extract the year).  
+  
+**Key Requirement:**  
+Your final answer must generate exactly one SQL query to answer the given question. Do not generate additional SQL queries.  
+When you get to the final query, output the query string ONLY inside the xml delimiter `<FINAL_ANSWER></FINAL_ANSWER>` using the following format:  
+  
+**************************  
+【Table creation statements】  
+{DATABASE_SCHEMA}  
+  
+**************************  
+【Question】  
+Question:  
+{QUESTION}  
+  
+Evidence:  
+{HINT}  
+  
+**************************  
+【Answer】  
+Repeating the question and hint, and generate one SQL query to answer the given question.  
+  
+Return the final SQL query in the following format:  
+xml  
+<FINAL_ANSWER>  
+<SQL_1>Your SQL query as a single line.</SQL_1>  
+<SQL_2></SQL_2>  
+<SQL_3></SQL_3>  
+</FINAL_ANSWER>
+
+------------------------------  
+  
+Here are some examples
+
+===========
+Example 1
+**************************
+create table Activity (
+  actid INTEGER PRIMARY KEY,
+  activity_name varchar(25)
+);
+
+create table Participates_in (
+  stuid INTEGER,
+  actid INTEGER,
+  FOREIGN KEY(stuid) REFERENCES Student(StuID),
+  FOREIGN KEY(actid) REFERENCES Activity(actid)
+);
+
+create table Faculty_Participates_in (
+  FacID INTEGER,
+  actid INTEGER,
+  FOREIGN KEY(FacID) REFERENCES Faculty(FacID),
+  FOREIGN KEY(actid) REFERENCES Activity(actid)
+);
+
+create table Student (
+        StuID        INTEGER PRIMARY KEY,
+        LName        VARCHAR(12),
+        Fname        VARCHAR(12),
+        Age      INTEGER,
+        Sex      VARCHAR(1),
+        Major        INTEGER,
+        Advisor      INTEGER,
+        city_code    VARCHAR(3)
+ );
+
+create table Faculty (
+       FacID 	       INTEGER PRIMARY KEY,
+       Lname		VARCHAR(15),
+       Fname		VARCHAR(15),
+       Rank		VARCHAR(15),
+       Sex		VARCHAR(1),
+       Phone		INTEGER,
+       Room		VARCHAR(5),
+       Building		VARCHAR(13)
+);
+
+**************************
+【Question】
+Question:  How many faculty do we have?
+
+Hint：
+To count the total number of faculty members, use COUNT(*) on the Faculty table.
+
+**************************
+【Answer】
+Repeating the question and hint, and generating the SQL with Recursive Divide-and-Conquer.
+**Question**: How many faculty do we have?
+**Hint**: Use SELECT COUNT(*) FROM Faculty to return the total number of rows in the Faculty table.
+
+**1. Divide and Conquer:**
+
+* **Main Question:** Count the total number of faculty members.
+    * **Analysis:** We only need the count of all rows in Faculty.
+    * **Pseudo SQL:** SELECT COUNT(*) FROM Faculty;
+
+    * **Sub-question 1:** What is the total number of entries in the Faculty table?
+        * **Analysis:**   Apply COUNT(*) to the table to get the row count.
+        * **Pseudo SQL:**  SELECT COUNT(*) FROM Faculty;
+
+**2. Assembling SQL:**
+
+* **Sub-question 1 (faculty count):**
+    * **SQL:**  SELECT COUNT(*) FROM Faculty;
+
+* **Main Question (total faculty):**
+    * **SQL:** SELECT COUNT(*) FROM Faculty;
+
+**3. Simplification and Optimization:**
+
+* The query is already minimal and efficient—it uses a single aggregate function on one table with no unnecessary clauses.
+
+**Final Optimized SQL Query:**
+
+<FINAL_ANSWER>
+<SQL_1>SELECT count(*) FROM Faculty;</SQL_1>  
+<SQL_2></SQL_2>  
+<SQL_3></SQL_3>
+</FINAL_ANSWER>
+
+===========
+Example 2
+**************************
+CREATE TABLE "stadium" (
+"Stadium_ID" int,
+"Location" text,
+"Name" text,
+"Capacity" int,
+"Highest" int,
+"Lowest" int,
+"Average" int,
+PRIMARY KEY ("Stadium_ID")
+);
+
+CREATE TABLE "singer" (
+"Singer_ID" int,
+"Name" text,
+"Country" text,
+"Song_Name" text,
+"Song_release_year" text,
+"Age" int,
+"Is_male" bool,
+PRIMARY KEY ("Singer_ID")
+);
+
+CREATE TABLE "concert" (
+"concert_ID" int,
+"concert_Name" text,
+"Theme" text,
+"Stadium_ID" text,
+"Year" text,
+PRIMARY KEY ("concert_ID"),
+FOREIGN KEY ("Stadium_ID") REFERENCES "stadium"("Stadium_ID")
+);
+
+CREATE TABLE "singer_in_concert" (
+"concert_ID" int,
+"Singer_ID" text,
+PRIMARY KEY ("concert_ID","Singer_ID"),
+FOREIGN KEY ("concert_ID") REFERENCES "concert"("concert_ID"),
+FOREIGN KEY ("Singer_ID") REFERENCES "singer"("Singer_ID")
+);
+
+**************************
+【Question】
+Question: What are the names of the singers and number of concerts for each person?
+
+Hint：
+To list each singer’s name alongside how many concerts they performed in, join singer_in_concert (T1) with singer (T2) on Singer_ID, then group by T2.Singer_ID and use COUNT(*).
+
+**************************
+【Answer】
+Repeating the question and hint, and generating the SQL with Recursive Divide-and-Conquer.
+**Question**: What are the names of the singers and number of concerts for each person?
+**Hint**: Use a join between singer_in_concert (alias T1) and singer (alias T2) on Singer_ID, then group by T2.Singer_ID and count entries.
+
+**1. Divide and Conquer:**
+
+* **Main Question:** Retrieve each singer’s name along with the count of concerts they have participated in.
+    * **Analysis:** We need to join singer_in_concert and singer to get the singer name. Then aggregate by singer to count how many concerts each has.
+    * **Pseudo SQL:** SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID;
+                      SELECT Singer_ID, Name FROM singer;
+                      SELECT s.Name, c.concert_count FROM ( SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID) AS c JOIN singer AS s ON c.Singer_ID = s.Singer_ID;
+
+    * **Sub-question 1:** How many concerts does each Singer_ID have?
+        * **Analysis:**   Aggregate singer_in_concert by Singer_ID.
+        * **Pseudo SQL:**  SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID;
+
+    * **Sub-question 1:** What is each singer’s name?
+        * **Analysis:**   Simple lookup in singer table.
+        * **Pseudo SQL:**  SELECT Singer_ID, Name FROM singer;
+
+
+**2. Assembling SQL:**
+
+* **Sub-question 1 (concert counts):**
+    * **SQL:**  SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID;
+
+* **Sub-question 2 (singer names):**
+    * **SQL:**  SELECT Singer_ID, Name FROM singer;
+
+
+* **Main Question (names & counts):**
+    * **SQL:** SELECT s.Name, c.concert_count FROM ( SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID) AS c JOIN singer AS s ON c.Singer_ID = s.Singer_ID;
+
+
+**3. Simplification and Optimization:**
+
+* By pushing the aggregation into the join directly, we can achieve the result in one query:
+**Final Optimized SQL Query:**
+
+<FINAL_ANSWER>
+<SQL_1>SELECT T2.name , count(*) FROM singer_in_concert AS T1 JOIN singer AS T2 ON T1.singer_id = T2.singer_id GROUP BY T2.singer_id</SQL_1>  
+<SQL_2></SQL_2>  
+<SQL_3></SQL_3>
+</FINAL_ANSWER>

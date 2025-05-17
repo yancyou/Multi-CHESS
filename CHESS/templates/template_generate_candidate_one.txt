@@ -1,0 +1,536 @@
+You are an experienced database expert.  
+Now you need to generate **one SQL query or multiple SQL queries** given the database information, a question, and some additional information.  
+The database structure is defined by the following table schemas (comments after '--' provide additional column descriptions).  
+Note that the "Example Values" are actual values from the column. Some columns might contain values that are directly related to the question. Use them to help you justify which columns to use.  
+  
+Your approach is called "recursive divide-and-conquer approach to SQL query generation from natural language". The steps are as follows:  
+1. **Divide (Decompose Sub-question with Pseudo SQL):** The complex natural language question is recursively broken down into simpler sub-questions. Each sub-question targets a specific piece of information or logic required for the final SQL query.  
+2. **Conquer (Real SQL for sub-questions):** For each sub-question (and the main question initially), a "pseudo-SQL" fragment is formulated. This pseudo-SQL represents the intended SQL logic but might have placeholders for answers to the decomposed sub-questions.  
+3. **Combine (Reassemble):** Once all sub-questions are resolved and their corresponding SQL fragments are generated, the process reverses. The SQL fragments are recursively combined by replacing the placeholders in the pseudo-SQL with the actual generated SQL from the lower levels.  
+4. **Final Output:** This bottom-up assembly culminates in the complete and correct SQL query that answers the original complex question.  
+  
+Additional Database Admin Instructions:  
+1. **SELECT Clause:**  
+    - Only select columns mentioned in the user's question.  
+    - Avoid unnecessary columns or values.  
+2. **Aggregation (MAX/MIN):**  
+    - Always perform JOINs before using MAX() or MIN().  
+3. **ORDER BY with Distinct Values:**  
+    - Use GROUP BY <column> before ORDER BY <column> ASC|DESC to ensure distinct values.  
+4. **Handling NULLs:**  
+    - If a column may contain NULL values (indicated by "None" in value examples or explicitly), use JOIN or WHERE <column> IS NOT NULL.  
+5. **FROM/JOIN Clauses:**  
+    - Only include tables essential to answer the question.  
+6. **Strictly Follow Hints:**  
+    - Adhere to all provided hints.  
+7. **Thorough Question Analysis:**  
+    - Address all conditions mentioned in the question.  
+8. **DISTINCT Keyword:**  
+    - Use SELECT DISTINCT when the question requires unique values (e.g., IDs, URLs).  
+    - Refer to column statistics ("Value Statics") to determine if DISTINCT is necessary.  
+9. **Column Selection:**  
+    - Carefully analyze column descriptions and hints to choose the correct column when similar columns exist across tables.  
+10. **String Concatenation:**  
+    - Never use || ' ' || or any other method to concatenate strings in the SELECT clause.  
+11. **JOIN Preference:**  
+    - Prioritize INNER JOIN over nested SELECT statements.  
+12. **SQLite Functions Only:**  
+    - Use only functions available in SQLite.  
+13. **Date Processing:**  
+    - Utilize STRFTIME() for date manipulation (e.g., STRFTIME('%Y', SOMETIME) to extract the year).  
+  
+**Key Requirement:**  
+Your final answer should generate up to three SQL queries to answer the given question. The number of SQL queries generated should depend on the complexity of the question:  
+- If the question requires only one SQL query, then only output the first query and leave `<SQL_2>` and `<SQL_3>` empty.  
+- If the question requires two SQL queries, output the first two queries and leave `<SQL_3>` empty.  
+- If the question requires three SQL queries, output all three.  
+  
+When you get to the final query, output the query string ONLY inside the xml delimiter `<FINAL_ANSWER></FINAL_ANSWER>` using the following format:  
+  
+**************************  
+【Table creation statements】  
+{DATABASE_SCHEMA}  
+  
+**************************  
+【Question】  
+Question:  
+{QUESTION}  
+  
+Evidence:  
+{HINT} 
+
+**************************  
+【Answer】  
+Repeating the question and hint, and generate up to three SQL queries to answer the given question. If you think fewer than three queries are required, leave the unused query fields empty.  
+  
+Return the final SQL queries in the following format:  
+xml  
+<FINAL_ANSWER>  
+<SQL_1>Your first SQL query as a single line.</SQL_1>  
+<SQL_2>Your second SQL query as a single line, or an empty string if not applicable.</SQL_2>  
+<SQL_3>Your third SQL query as a single line, or an empty string if not applicable.</SQL_3>  
+</FINAL_ANSWER>
+
+Here are some examples
+
+======= Example =======
+**************************
+【Table creation statements】 
+CREATE TABLE "Customers" ( 
+    "id" int, 
+    "name" text, 
+    "age" int, 
+    "membership_credit" int, 
+    PRIMARY KEY ("id") ); 
+CREATE TABLE "Discount" ( 
+    "id" int, 
+    "name" text, 
+    "membership_credit" int, 
+    PRIMARY KEY ("id") ); 
+CREATE TABLE "Vehicles" ( 
+    "id" int, "name" text, 
+    "Model_year" int, 
+    "Type_of_powertrain" text, 
+    "Combined_fuel_economy_rate" int, 
+    "City_fuel_economy_rate" int, 
+    "Highway_fuel_economy_rate" int, 
+    "Cost_per_25_miles" real, 
+    "Annual_fuel_cost" real, 
+    "Notes" text, 
+    PRIMARY KEY ("id") ); 
+CREATE TABLE "Renting_history" ( 
+    "id" int, 
+    "customer_id" int, 
+    "discount_id" int, 
+    "vehicles_id" int, 
+    "total_hours" int, 
+    PRIMARY KEY ("id"), 
+    FOREIGN KEY ("customer_id") 
+    REFERENCES "Customers"("id"), 
+    FOREIGN KEY ("vehicles_id") 
+    REFERENCES "Vehicles"("id"), 
+    FOREIGN KEY ("discount_id") 
+    REFERENCES "Discount"("id") );
+
+**************************
+【Question】
+Question:
+Provide the names of all vehicles, sorted separately by model year in descending order and by combined fuel economy rate in ascending order.
+
+Hint：
+From 1900 to 1992 refers to games_year BETWEEN 1900 AND 1992; London refers to city_name = 'London'; games refer to games_name;
+
+**************************
+【Answer】
+
+Repeating the question and hint, and generating the SQL with Recursive Divide-and-Conquer. 
+**Question**: Provide the names of all vehicles, sorted separately by model year in descending order and by combined fuel economy rate in ascending order. 
+**Hint**: The two ordering criteria are independent. One query should sort the vehicles by model year in descending order (newest first) and another query should sort the vehicles by combined fuel economy rate in ascending order (lowest fuel economy rate first). 
+
+**1. Divide and Conquer:**
+
+* **Main Question:** Provide the names of all vehicles, sorted separately by model year in descending order and by combined fuel economy rate in ascending order.
+    * **Analysis:** This question explicitly requires two separate sorting methods applied independently: first by model year in descending order, then by combined fuel economy rate in ascending order. Both queries will select the same column, "name", from the "Vehicles" table.
+    * **Pseudo SQL:** SELECT name FROM Vehicles ORDER BY <criteria>; (two separate queries required)
+
+    * **Sub-question 1:** Names sorted by model year in descending order. 
+        * **Analysis:**   The column required for this sorting criterion is "Model_year" from the "Vehicles" table. We will sort by this column in descending order.
+        * **Pseudo SQL:**  SELECT name FROM Vehicles ORDER BY Model_year DESC
+
+    * **Sub-question 2:** Names sorted by combined fuel economy rate in ascending order.
+        * **Analysis:** The column required for this sorting criterion is "Combined_fuel_economy_rate" from the "Vehicles" table. We will sort by this column in ascending order.
+        * **Pseudo SQL:** SELECT name FROM Vehicles ORDER BY Combined_fuel_economy_rate ASC
+
+**2. Assembling SQL:**
+
+* **Sub-question 1 (games are in London):**
+    * **SQL:**  SELECT name FROM Vehicles ORDER BY Model_year DESC
+
+* **Sub-question 2 (games year between 1900 and 1992):**
+    * **SQL:**  SELECT name FROM Vehicles ORDER BY Combined_fuel_economy_rate ASC
+
+* **Main Question (count of games):**
+    * **SQL:** SELECT COUNT(`T1`.`id`) FROM `games` AS `T1` WHERE `T1`.`id` IN (SELECT `T1`.`games_id` FROM `games_city` AS `T1` INNER JOIN `city` AS `T2` ON `T1`.`city_id` = `T2`.`id` WHERE `T2`.`city_name` = 'London') AND `T1`.`games_year` BETWEEN 1900 AND 1992
+
+**3. Simplification and Optimization:**
+
+* The SQL queries generated from step 2 are already simple and optimized, requiring no further simplification, as the task explicitly requested separate sorting orders.
+
+**Final Optimized SQL Query:**
+
+<FINAL_ANSWER>
+<SQL_1>SELECT name FROM Vehicles ORDER BY Model_year DESC;</SQL_1>  
+<SQL_2>SELECT name FROM Vehicles ORDER BY Combined_fuel_economy_rate ASC;</SQL_2>  
+<SQL_3></SQL_3>
+</FINAL_ANSWER>
+
+===========
+Example 1
+**************************
+【Table creation statements】 
+CREATE TABLE "Customers" ( 
+    "id" int, 
+    "name" text, 
+    "age" int, 
+    "membership_credit" int, 
+    PRIMARY KEY ("id") ); 
+CREATE TABLE "Discount" ( 
+    "id" int, 
+    "name" text, 
+    "membership_credit" int, 
+    PRIMARY KEY ("id") ); 
+CREATE TABLE "Vehicles" ( 
+    "id" int, "name" text, 
+    "Model_year" int, 
+    "Type_of_powertrain" text, 
+    "Combined_fuel_economy_rate" int, 
+    "City_fuel_economy_rate" int, 
+    "Highway_fuel_economy_rate" int, 
+    "Cost_per_25_miles" real, 
+    "Annual_fuel_cost" real, 
+    "Notes" text, 
+    PRIMARY KEY ("id") ); 
+CREATE TABLE "Renting_history" ( 
+    "id" int, 
+    "customer_id" int, 
+    "discount_id" int, 
+    "vehicles_id" int, 
+    "total_hours" int, 
+    PRIMARY KEY ("id"), 
+    FOREIGN KEY ("customer_id") 
+    REFERENCES "Customers"("id"), 
+    FOREIGN KEY ("vehicles_id") 
+    REFERENCES "Vehicles"("id"), 
+    FOREIGN KEY ("discount_id") 
+    REFERENCES "Discount"("id") );
+
+**************************
+【Question】
+Question: Which type of powertrain is most common and which model year has more than 2 vehicles?
+
+Hint：
+To find the most common powertrain, group by type_of_powertrain, order by the count descending, and limit to 1. To find model years with more than two vehicles, group by model_year and use a HAVING COUNT(*) > 2.
+
+**************************
+【Answer】
+
+Repeating the question and hint, and generating the SQL with Recursive Divide-and-Conquer.
+**Question**: Which type of powertrain is most common and which model year has more than 2 vehicles?
+**Hint**: Split into two independent aggregation queries: Most common powertrain: GROUP BY type_of_powertrain + ORDER BY COUNT(*) DESC LIMIT 1 + Model years with more than two vehicles: GROUP BY model_year + HAVING COUNT(*) > 2
+
+**1. Divide and Conquer:**
+
+* **Main Question:** Identify the most frequent type_of_powertrain and list all model_year values having more than two vehicles.
+    * **Analysis:** One query to find the single most common powertrain. One query to list model years where the vehicle count exceeds 2.
+    * **Pseudo SQL:** SELECT type_of_powertrain FROM vehicles GROUP BY type_of_powertrain ORDER BY COUNT(*) DESC LIMIT 1;
+                      SELECT model_year FROM vehicles GROUP BY model_year HAVING COUNT(*) > 2;
+
+
+    * **Sub-question 1:** Which type_of_powertrain appears most often? 
+        * **Analysis:**   Group by type_of_powertrain, sort by the frequency descending, and select the top result.
+        * **Pseudo SQL:**  SELECT type_of_powertrain FROM vehicles GROUP BY type_of_powertrain ORDER BY COUNT(*) DESC LIMIT 1;
+
+
+    * **Sub-question 2:** Which model_year has more than 2 vehicles?
+        * **Analysis:** Group by model_year and filter groups with COUNT(*) > 2.
+        * **Pseudo SQL:** SELECT model_year FROM vehicles GROUP BY model_year HAVING COUNT(*) > 2;
+
+**2. Assembling SQL:**
+
+* **Sub-question 1 (most common powertrain):**
+    * **SQL:**  SELECT type_of_powertrain FROM vehicles GROUP BY type_of_powertrain ORDER BY COUNT(*) DESC LIMIT 1;
+
+* **Sub-question 2 (model years with more than 2 vehicles):**
+    * **SQL:**  SELECT model_year FROM vehicles GROUP BY model_year HAVING COUNT(*) > 2;
+
+
+* **Main Question (most common powertrain & model years > 2 vehicles):**
+    * **SQL:** SELECT type_of_powertrain FROM vehicles GROUP BY type_of_powertrain ORDER BY COUNT(*) DESC LIMIT 1;
+               SELECT model_year FROM vehicles GROUP BY model_year HAVING COUNT(*) > 2;
+
+
+**3. Simplification and Optimization:**
+
+* Both queries are already minimal and efficient—they use only the required GROUP BY, ORDER BY/HAVING and no unnecessary joins or subqueries.
+
+**Final Optimized SQL Query:**
+
+<FINAL_ANSWER>
+<SQL_1>SELECT type_of_powertrain FROM vehicles GROUP BY type_of_powertrain ORDER BY count(*) DESC LIMIT 1;</SQL_1>  
+<SQL_2>SELECT model_year FROM vehicles GROUP BY model_year HAVING count(*) > 2;</SQL_2>  
+<SQL_3></SQL_3>
+</FINAL_ANSWER>
+
+===========
+Example 2
+**************************
+【Table creation statements】 
+CREATE TABLE "customers" (
+	"Id" INTEGER PRIMARY KEY,
+	"LastName" TEXT,
+	"FirstName" TEXT
+);
+
+
+CREATE TABLE "goods" (
+	"Id" TEXT PRIMARY KEY,
+	"Flavor" TEXT,
+	"Food" TEXT,
+	"Price" REAL
+);
+
+
+CREATE TABLE "items" (
+	"Receipt" INTEGER,
+	"Ordinal" INTEGER,
+	"Item" TEXT,
+	PRIMARY KEY(Receipt, Ordinal),
+	FOREIGN KEY (Item) REFERENCES goods(Id)
+    FOREIGN KEY (Receipt) REFERENCES receipts(ReceiptNumber)
+);
+
+CREATE TABLE "receipts" (
+	"ReceiptNumber" INTEGER PRIMARY KEY,
+	"Date" TEXT,
+	"CustomerId" INTEGER,
+	FOREIGN KEY(CustomerId) REFERENCES customers(Id)
+);
+
+**************************
+【Question】
+Question: List all the flavors of Croissant available in this bakery and count the number of goods for each food type.
+
+Hint：
+To list Croissant flavors, filter goods where Food = 'Croissant' and select Flavor;
+to count goods per food type, group by Food and use COUNT(*).
+
+**************************
+【Answer】
+Repeating the question and hint, and generating the SQL with Recursive Divide-and-Conquer.
+**Question**: List all the flavors of Croissant available in this bakery and count the number of goods for each food type.
+**Hint**: Split into two independent aggregation queries: Croissant flavors: SELECT Flavor FROM goods WHERE Food = 'Croissant'; Count per food type: SELECT COUNT(*), Food FROM goods GROUP BY Food
+
+**1. Divide and Conquer:**
+
+* **Main Question:** Retrieve two pieces of information: 1.All Croissant flavors. 2.The count of items for each food type.
+    * **Analysis:** Sub-question 1: Filter by Food = 'Croissant' and select Flavor.
+                    Sub-question 2: Group by Food and count rows.
+    * **Pseudo SQL:** SELECT Flavor FROM goods WHERE Food = 'Croissant';
+                      SELECT COUNT(*), Food FROM goods GROUP BY Food;
+
+    * **Sub-question 1:** Which flavors of Croissant are available?
+        * **Analysis:**   Use a simple WHERE filter on Food.
+        * **Pseudo SQL:**  SELECT Flavor FROM goods WHERE Food = 'Croissant';
+
+    * **Sub-question 2:** How many goods exist for each food type?
+        * **Analysis:** Group by Food and count entries.
+        * **Pseudo SQL:** SELECT COUNT(*), Food FROM goods GROUP BY Food;
+
+**2. Assembling SQL:**
+
+* **Sub-question 1 (Croissant flavors):**
+    * **SQL:**  SELECT Flavor FROM goods WHERE Food = 'Croissant';
+
+* **Sub-question 2 (count per food type):**
+    * **SQL:**  SELECT COUNT(*), Food FROM goods GROUP BY Food;
+
+* **Main Question (flavors & counts):**
+    * **SQL:** SELECT Flavor FROM goods WHERE Food = 'Croissant';
+               SELECT COUNT(*), Food FROM goods GROUP BY Food;
+
+
+**3. Simplification and Optimization:**
+
+* Both queries are already minimal and efficient—they use only the required GROUP BY, ORDER BY/HAVING and no unnecessary joins or subqueries.Both queries are already minimal and efficient—each uses only the necessary filtering, grouping, and aggregation without extra joins or subqueries.
+
+**Final Optimized SQL Query:**
+
+<FINAL_ANSWER>
+<SQL_1>SELECT flavor FROM goods WHERE food = 'Croissant';</SQL_1>  
+<SQL_2>SELECT count(*), food FROM goods GROUP BY food;</SQL_2>  
+<SQL_3></SQL_3>
+</FINAL_ANSWER>
+
+===========
+Example 3
+**************************
+create table Activity (
+  actid INTEGER PRIMARY KEY,
+  activity_name varchar(25)
+);
+
+create table Participates_in (
+  stuid INTEGER,
+  actid INTEGER,
+  FOREIGN KEY(stuid) REFERENCES Student(StuID),
+  FOREIGN KEY(actid) REFERENCES Activity(actid)
+);
+
+create table Faculty_Participates_in (
+  FacID INTEGER,
+  actid INTEGER,
+  FOREIGN KEY(FacID) REFERENCES Faculty(FacID),
+  FOREIGN KEY(actid) REFERENCES Activity(actid)
+);
+
+create table Student (
+        StuID        INTEGER PRIMARY KEY,
+        LName        VARCHAR(12),
+        Fname        VARCHAR(12),
+        Age      INTEGER,
+        Sex      VARCHAR(1),
+        Major        INTEGER,
+        Advisor      INTEGER,
+        city_code    VARCHAR(3)
+ );
+
+create table Faculty (
+       FacID 	       INTEGER PRIMARY KEY,
+       Lname		VARCHAR(15),
+       Fname		VARCHAR(15),
+       Rank		VARCHAR(15),
+       Sex		VARCHAR(1),
+       Phone		INTEGER,
+       Room		VARCHAR(5),
+       Building		VARCHAR(13)
+);
+
+**************************
+【Question】
+Question:  How many faculty do we have?
+
+Hint：
+To count the total number of faculty members, use COUNT(*) on the Faculty table.
+
+**************************
+【Answer】
+Repeating the question and hint, and generating the SQL with Recursive Divide-and-Conquer.
+**Question**: How many faculty do we have?
+**Hint**: Use SELECT COUNT(*) FROM Faculty to return the total number of rows in the Faculty table.
+
+**1. Divide and Conquer:**
+
+* **Main Question:** Count the total number of faculty members.
+    * **Analysis:** We only need the count of all rows in Faculty.
+    * **Pseudo SQL:** SELECT COUNT(*) FROM Faculty;
+
+    * **Sub-question 1:** What is the total number of entries in the Faculty table?
+        * **Analysis:**   Apply COUNT(*) to the table to get the row count.
+        * **Pseudo SQL:**  SELECT COUNT(*) FROM Faculty;
+
+**2. Assembling SQL:**
+
+* **Sub-question 1 (faculty count):**
+    * **SQL:**  SELECT COUNT(*) FROM Faculty;
+
+* **Main Question (total faculty):**
+    * **SQL:** SELECT COUNT(*) FROM Faculty;
+
+**3. Simplification and Optimization:**
+
+* The query is already minimal and efficient—it uses a single aggregate function on one table with no unnecessary clauses.
+
+**Final Optimized SQL Query:**
+
+<FINAL_ANSWER>
+<SQL_1>SELECT count(*) FROM Faculty;</SQL_1>  
+<SQL_2></SQL_2>  
+<SQL_3></SQL_3>
+</FINAL_ANSWER>
+
+===========
+Example 4
+**************************
+CREATE TABLE "stadium" (
+"Stadium_ID" int,
+"Location" text,
+"Name" text,
+"Capacity" int,
+"Highest" int,
+"Lowest" int,
+"Average" int,
+PRIMARY KEY ("Stadium_ID")
+);
+
+CREATE TABLE "singer" (
+"Singer_ID" int,
+"Name" text,
+"Country" text,
+"Song_Name" text,
+"Song_release_year" text,
+"Age" int,
+"Is_male" bool,
+PRIMARY KEY ("Singer_ID")
+);
+
+CREATE TABLE "concert" (
+"concert_ID" int,
+"concert_Name" text,
+"Theme" text,
+"Stadium_ID" text,
+"Year" text,
+PRIMARY KEY ("concert_ID"),
+FOREIGN KEY ("Stadium_ID") REFERENCES "stadium"("Stadium_ID")
+);
+
+CREATE TABLE "singer_in_concert" (
+"concert_ID" int,
+"Singer_ID" text,
+PRIMARY KEY ("concert_ID","Singer_ID"),
+FOREIGN KEY ("concert_ID") REFERENCES "concert"("concert_ID"),
+FOREIGN KEY ("Singer_ID") REFERENCES "singer"("Singer_ID")
+);
+
+**************************
+【Question】
+Question: What are the names of the singers and number of concerts for each person?
+
+Hint：
+To list each singer’s name alongside how many concerts they performed in, join singer_in_concert (T1) with singer (T2) on Singer_ID, then group by T2.Singer_ID and use COUNT(*).
+
+**************************
+【Answer】
+Repeating the question and hint, and generating the SQL with Recursive Divide-and-Conquer.
+**Question**: What are the names of the singers and number of concerts for each person?
+**Hint**: Use a join between singer_in_concert (alias T1) and singer (alias T2) on Singer_ID, then group by T2.Singer_ID and count entries.
+
+**1. Divide and Conquer:**
+
+* **Main Question:** Retrieve each singer’s name along with the count of concerts they have participated in.
+    * **Analysis:** We need to join singer_in_concert and singer to get the singer name. Then aggregate by singer to count how many concerts each has.
+    * **Pseudo SQL:** SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID;
+                      SELECT Singer_ID, Name FROM singer;
+                      SELECT s.Name, c.concert_count FROM ( SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID) AS c JOIN singer AS s ON c.Singer_ID = s.Singer_ID;
+
+    * **Sub-question 1:** How many concerts does each Singer_ID have?
+        * **Analysis:**   Aggregate singer_in_concert by Singer_ID.
+        * **Pseudo SQL:**  SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID;
+
+    * **Sub-question 1:** What is each singer’s name?
+        * **Analysis:**   Simple lookup in singer table.
+        * **Pseudo SQL:**  SELECT Singer_ID, Name FROM singer;
+
+
+**2. Assembling SQL:**
+
+* **Sub-question 1 (concert counts):**
+    * **SQL:**  SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID;
+
+* **Sub-question 2 (singer names):**
+    * **SQL:**  SELECT Singer_ID, Name FROM singer;
+
+
+* **Main Question (names & counts):**
+    * **SQL:** SELECT s.Name, c.concert_count FROM ( SELECT Singer_ID, COUNT(*) AS concert_count FROM singer_in_concert GROUP BY Singer_ID) AS c JOIN singer AS s ON c.Singer_ID = s.Singer_ID;
+
+
+**3. Simplification and Optimization:**
+
+* By pushing the aggregation into the join directly, we can achieve the result in one query:
+**Final Optimized SQL Query:**
+
+<FINAL_ANSWER>
+<SQL_1>SELECT T2.name , count(*) FROM singer_in_concert AS T1 JOIN singer AS T2 ON T1.singer_id = T2.singer_id GROUP BY T2.singer_id</SQL_1>  
+<SQL_2></SQL_2>  
+<SQL_3></SQL_3>
+</FINAL_ANSWER>
