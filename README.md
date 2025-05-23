@@ -26,13 +26,13 @@ Our framework offers configurable features that adapt to various deployment cons
 
 ## CHESS
 
-![CHESS Framework](images/chess.jpg)
+![CHESS Framework](CHESS/images/chess.jpg)
 
 ## Setting up the Environment
 
 1. **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/CHESS.git
+    git clone https://github.com/yancyou/Multi-CHESS.git
     cd CHESS
     ```
 
